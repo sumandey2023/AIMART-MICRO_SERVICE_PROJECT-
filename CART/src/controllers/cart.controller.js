@@ -1,5 +1,24 @@
 const cartModel = require("../models/cart.model");
 
+async function getCart(req, res) {
+  const user = req.user;
+
+  let cart = await cartModel.findOne({ user: user.id });
+
+  if (!cart) {
+    cart = new cartModel({ user: user.id, items: [] });
+    await cart.save();
+  }
+
+  res.status(200).json({
+    cart,
+    totals: {
+      itemCount: cart.items.length,
+      totalQuantity: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+    },
+  });
+}
+
 async function addItemsToCart(req, res) {
   const { productId, qty } = req.body;
   const user = req.user;
@@ -76,4 +95,10 @@ async function deleteItem(req, res) {
     .json({ message: "Item removed from cart successfully", cart });
 }
 
-module.exports = { addItemsToCart, getCartItems, updateItem, deleteItem };
+module.exports = {
+  addItemsToCart,
+  getCartItems,
+  updateItem,
+  deleteItem,
+  getCart,
+};
