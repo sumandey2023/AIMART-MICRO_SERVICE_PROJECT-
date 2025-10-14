@@ -12,25 +12,25 @@ router.post(
   orderController.createOrder
 );
 
-// router.get("/me", createAuthMiddleware(["user"]), orderController.getMyOrders);
+router.get("/me", createAuthMiddleware(["user"]), orderController.getMyOrders);
 
-// router.post(
-//   "/:id/cancel",
-//   createAuthMiddleware(["user"]),
-//   orderController.cancelOrderById
-// );
+router.post(
+  "/:id/cancel",
+  createAuthMiddleware(["user"]),
+  orderController.cancelOrderById
+);
 
-// router.patch(
-//   "/:id/address",
-//   createAuthMiddleware(["user"]),
-//   validation.updateAddressValidation,
-//   orderController.updateOrderAddress
-// );
+router.patch(
+  "/:id/address",
+  createAuthMiddleware(["user"]),
+  validation.updateAddressValidation,
+  orderController.updateOrderAddress
+);
 
-// router.get(
-//   "/:id",
-//   createAuthMiddleware(["user", "admin"]),
-//   orderController.getOrderById
-// );
+router.get(
+  "/:id",
+  createAuthMiddleware(["user", "admin"]),
+  orderController.getOrderById
+);
 
 module.exports = router;

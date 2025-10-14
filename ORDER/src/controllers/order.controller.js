@@ -1,7 +1,15 @@
 // const { promises } = require("supertest/lib/test");
 const orderModel = require("../models/order.model");
 const axios = require("axios");
-// const { publishToQueue } = require("../broker/borker");
+// publishToQueue may be unavailable in some setups; require safely
+let publishToQueue;
+try {
+  // adjust the path if your broker file is located elsewhere
+  publishToQueue = require("../broker/borker").publishToQueue;
+} catch (e) {
+  // noop - we'll only call publishToQueue if it's available
+  publishToQueue = null;
+}
 
 async function createOrder(req, res) {
   const user = req.user;
@@ -15,36 +23,72 @@ async function createOrder(req, res) {
       },
     });
 
+    // helper to normalize product response shapes
+    const extractProductFromResponse = (axiosResponse) => {
+      if (!axiosResponse) return null;
+      // common shapes: { data: { data: product } }, { data: product }, { product }, raw product
+      if (axiosResponse.data && axiosResponse.data.data)
+        return axiosResponse.data.data;
+      if (axiosResponse.data && typeof axiosResponse.data === "object")
+        return axiosResponse.data.product || axiosResponse.data;
+      if (axiosResponse.product) return axiosResponse.product;
+      return axiosResponse;
+    };
+
     const products = await Promise.all(
       cartResponse.data.cart.items.map(async (item) => {
-        return (
-          await axios.get(
-            `http://localhost:3001/api/products/${item.productId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          )
-        ).data.data;
+        const resp = await axios.get(
+          `http://localhost:3001/api/products/${item.productId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return extractProductFromResponse(resp);
       })
     );
 
     let priceAmount = 0;
-    console.log(products);
 
     const orderItems = cartResponse.data.cart.items.map((item, index) => {
-      const product = products.find((p) => p._id === item.productId);
+      const product = products.find(
+        (p) =>
+          p._id === item.productId ||
+          p._id === item.productId ||
+          p.id === item.productId
+      );
 
-      // if not in stock, does not allow order creation
-
-      if (product.stock < item.quantity) {
+      if (!product) {
         throw new Error(
-          `Product ${product.title} is out of stock or insufficient stock`
+          `Product with id ${item.productId} not found from product service`
         );
       }
 
-      const itemTotal = product.price.amount * item.quantity;
+      // normalize price: product.price may be a number or an object { amount, currency }
+      let unitPriceAmount = 0;
+      let unitPriceCurrency = "INR";
+      if (product.price == null) {
+        throw new Error(`Product ${product.title || product._id} has no price`);
+      }
+      if (typeof product.price === "number") {
+        unitPriceAmount = product.price;
+        unitPriceCurrency = product.currency || "INR";
+      } else if (typeof product.price === "object") {
+        unitPriceAmount = product.price.amount ?? product.price.price ?? 0;
+        unitPriceCurrency = product.price.currency || product.currency || "INR";
+      }
+
+      // if not in stock, do not allow order creation
+      if ((product.stock ?? 0) < item.quantity) {
+        throw new Error(
+          `Product ${
+            product.title || product._id
+          } is out of stock or insufficient stock`
+        );
+      }
+
+      const itemTotal = unitPriceAmount * item.quantity;
       priceAmount += itemTotal;
 
       return {
@@ -52,7 +96,7 @@ async function createOrder(req, res) {
         quantity: item.quantity,
         price: {
           amount: itemTotal,
-          currency: product.price.currency,
+          currency: unitPriceCurrency,
         },
       };
     });
@@ -74,12 +118,18 @@ async function createOrder(req, res) {
       },
     });
 
-    await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
+    // publish event if available
+    if (typeof publishToQueue === "function") {
+      try {
+        await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
+      } catch (e) {
+        // don't fail the request for publish errors
+        console.error("Failed to publish order event:", e?.message || e);
+      }
+    }
 
     res.status(201).json({ order });
   } catch (err) {
-    console.log(err);
-
     res
       .status(500)
       .json({ message: "Internal server error", error: err.message });
