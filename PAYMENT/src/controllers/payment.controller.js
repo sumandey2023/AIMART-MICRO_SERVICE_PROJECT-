@@ -92,32 +92,32 @@ async function verifyPayment(req, res) {
 
     await payment.save();
 
-    await publishToQueue("PAYMENT_NOTIFICATION.PAYMENT_COMPLETED", {
-      email: req.user.email,
-      orderId: payment.order,
-      paymentId: payment.paymentId,
-      amount: payment.price.amount / 100,
-      currency: payment.price.currency,
-      fullName: req.user.fullName,
-    });
+    // await publishToQueue("PAYMENT_NOTIFICATION.PAYMENT_COMPLETED", {
+    //   email: req.user.email,
+    //   orderId: payment.order,
+    //   paymentId: payment.paymentId,
+    //   amount: payment.price.amount / 100,
+    //   currency: payment.price.currency,
+    //   fullName: req.user.fullName,
+    // });
 
-    await publishToQueue("PAYMENT_SELLER_DASHBOARD.PAYMENT_UPDATED", payment);
+    // await publishToQueue("PAYMENT_SELLER_DASHBOARD.PAYMENT_UPDATED", payment);
 
     res.status(200).json({ message: "Payment verified successfully", payment });
   } catch (err) {
     console.log(err);
 
-    await publishToQueue("PAYMENT_NOTIFICATION.PAYMENT_FAILED", {
-      email: req.user.email,
-      paymentId: paymentId,
-      orderId: razorpayOrderId,
-      fullName: req.user.fullName,
-    });
+    // await publishToQueue("PAYMENT_NOTIFICATION.PAYMENT_FAILED", {
+    //   email: req.user.email,
+    //   paymentId: paymentId,
+    //   orderId: razorpayOrderId,
+    //   fullName: req.user.fullName,
+    // });
     return res.status(500).json({ message: "Internal Server Error" });
   }
 }
 
 module.exports = {
   createPayment,
-  // verifyPayment,
+  verifyPayment,
 };
