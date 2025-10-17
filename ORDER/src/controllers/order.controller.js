@@ -1,15 +1,6 @@
-// const { promises } = require("supertest/lib/test");
 const orderModel = require("../models/order.model");
 const axios = require("axios");
-// publishToQueue may be unavailable in some setups; require safely
-let publishToQueue;
-try {
-  // adjust the path if your broker file is located elsewhere
-  publishToQueue = require("../broker/borker").publishToQueue;
-} catch (e) {
-  // noop - we'll only call publishToQueue if it's available
-  publishToQueue = null;
-}
+const { publishToQueue } = require("../broker/broker");
 
 async function createOrder(req, res) {
   const user = req.user;
@@ -118,15 +109,7 @@ async function createOrder(req, res) {
       },
     });
 
-    // publish event if available
-    if (typeof publishToQueue === "function") {
-      try {
-        await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
-      } catch (e) {
-        // don't fail the request for publish errors
-        console.error("Failed to publish order event:", e?.message || e);
-      }
-    }
+    await publishToQueue("ORDER_SELLER_DASHBOARD.ORDER_CREATED", order);
 
     res.status(201).json({ order });
   } catch (err) {

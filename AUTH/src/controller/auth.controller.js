@@ -41,7 +41,7 @@ async function registerUser(req, res) {
         fullName: user.fullName,
         role: user.role,
       }),
-      // publishToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", user),
+      publishToQueue("AUTH_SELLER_DASHBOARD.USER_CREATED", user),
     ]);
 
     const token = jwt.sign(

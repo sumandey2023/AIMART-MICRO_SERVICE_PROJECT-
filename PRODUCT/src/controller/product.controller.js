@@ -1,6 +1,7 @@
 const { uploadImage } = require("../service/imagekit.service");
 const Product = require("../models/product.model");
 const mongoose = require("mongoose");
+const { publishToQueue } = require("../broker/broker");
 
 //CREATE PRODUCT
 async function createProduct(req, res) {
@@ -28,6 +29,14 @@ async function createProduct(req, res) {
       seller,
       images,
     });
+
+    await publishToQueue("PRODUCT_SELLER_DASHBOARD.PRODUCT_CREATED", product);
+    await publishToQueue("PRODUCT_NOTIFICATION.PRODUCT_CREATED", {
+      email: req.user.email,
+      productId: product._id,
+      sellerId: seller,
+    });
+
     res.status(201).json({ message: "Product created", product });
   } catch (error) {
     console.error("Error creating product:", error);
