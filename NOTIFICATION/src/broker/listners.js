@@ -114,15 +114,94 @@ module.exports = function () {
 
   subscribeToQueue("PAYMENT_NOTIFICATION.PAYMENT_INITIATED", async (data) => {
     const emailHTMLTemplate = `
-        <h1>Payment Initiated</h1>
-        <p>Dear ${data.username},</p>
-        <p>Your payment of ${data.currency} ${data.amount} for the order ID: ${data.orderId} has been initiated.</p>
-        <p>We will notify you once the payment is completed.</p>
-        <p>Best regards,<br/>The Team</p>
-        `;
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payment Initiated</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+      }
+      .email-container {
+        max-width: 600px;
+        background: #ffffff;
+        margin: 40px auto;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+      }
+      .header {
+        background: linear-gradient(135deg, #2563eb, #06b6d4);
+        color: white;
+        text-align: center;
+        padding: 25px 10px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .content {
+        padding: 25px 30px;
+        color: #333;
+      }
+      .content h2 {
+        color: #2563eb;
+        margin-top: 0;
+      }
+      .highlight-box {
+        background: #f0f7ff;
+        border-left: 4px solid #2563eb;
+        padding: 12px 16px;
+        margin: 15px 0;
+        border-radius: 5px;
+      }
+      .highlight-box p {
+        margin: 6px 0;
+        font-size: 15px;
+      }
+      .footer {
+        background-color: #f9fafb;
+        text-align: center;
+        padding: 15px;
+        font-size: 13px;
+        color: #777;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <h1>💳 Payment Initiated</h1>
+      </div>
+      <div class="content">
+        <h2>Hello ${data.username},</h2>
+        <p>We’ve received your payment request. Here are the details:</p>
+
+        <div class="highlight-box">
+          <p><strong>Amount:</strong> ${data.currency} ${data.amount}</p>
+          <p><strong>Order ID:</strong> ${data.orderId}</p>
+        </div>
+
+        <p>Your payment is currently being processed. We’ll notify you once the transaction is successfully completed.</p>
+
+        <p style="margin-top: 25px;">Thank you for choosing <strong>AI Mart</strong>!</p>
+      </div>
+      <div class="footer">
+        <p>© ${new Date().getFullYear()} AI Mart. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+
     await sendEmail(
       data.email,
-      "Payment Initiated",
+      "💳 Payment Initiated",
       "Your payment is being processed",
       emailHTMLTemplate
     );
@@ -162,15 +241,90 @@ module.exports = function () {
 
   subscribeToQueue("PRODUCT_NOTIFICATION.PRODUCT_CREATED", async (data) => {
     const emailHTMLTemplate = `
-        <h1>New Product Available!</h1>
-        <p>Dear ${data.username},</p>
-        <p>Check it out and enjoy exclusive launch offers!</p>
-        <p>Best regards,<br/>The Team</p>
-        `;
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Product Created</title>
+    <style>
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f4f6f8;
+        margin: 0;
+        padding: 0;
+      }
+      .email-container {
+        max-width: 600px;
+        background: #ffffff;
+        margin: 40px auto;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+      .header {
+        background: linear-gradient(135deg, #4f46e5, #06b6d4);
+        color: white;
+        text-align: center;
+        padding: 25px 10px;
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 22px;
+      }
+      .content {
+        padding: 25px 30px;
+        color: #333;
+      }
+      .content h2 {
+        color: #4f46e5;
+        margin-top: 0;
+      }
+      .btn {
+        display: inline-block;
+        padding: 10px 18px;
+        margin-top: 15px;
+        background: #4f46e5;
+        color: white;
+        text-decoration: none;
+        border-radius: 6px;
+        font-weight: 500;
+      }
+      .footer {
+        background-color: #f1f5f9;
+        text-align: center;
+        padding: 15px;
+        font-size: 13px;
+        color: #777;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="email-container">
+      <div class="header">
+        <h1>🎉 Product Created Successfully!</h1>
+      </div>
+      <div class="content">
+        <h2>Hello ${data.username},</h2>
+        <p>Congratulations! You’ve just created a new product in your dashboard. 🎊</p>
+        <p>Take a quick look to make sure everything looks perfect.</p>
+        <a href="http://localhost:3001/api/products/${
+          data.productId
+        }" class="btn" target="_blank">View Product</a>
+        <p style="margin-top: 25px;">Thank you for using <strong>AI Mart</strong>!</p>
+      </div>
+      <div class="footer">
+        <p>© ${new Date().getFullYear()} AI Mart. All rights reserved.</p>
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+
     await sendEmail(
       data.email,
-      "New Product Launched",
-      "Check out our latest product",
+      "🎉 Your Product Has Been Created!",
+      "Check out your new product",
       emailHTMLTemplate
     );
   });

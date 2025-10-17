@@ -35,6 +35,7 @@ async function createProduct(req, res) {
       email: req.user.email,
       productId: product._id,
       sellerId: seller,
+      username: req.user.username,
     });
 
     res.status(201).json({ message: "Product created", product });
@@ -44,29 +45,53 @@ async function createProduct(req, res) {
 }
 
 //GET PRODUCTS
+// async function getProducts(req, res) {
+//   const { q, minprice, maxprice, skip = 0, limit = 20 } = req.query;
+//   const filter = {};
+//   if (q) {
+//     filter.$text = { $search: q };
+//   }
+//   if (minprice) {
+//     filter["price.price"] = {
+//       ...filter["price.price"],
+//       $gte: Number(minprice),
+//     };
+//   }
+//   if (maxprice) {
+//     filter["price.price"] = {
+//       ...filter["price.price"],
+//       $lte: Number(maxprice),
+//     };
+//   }
+
+//   const products = await Product.find(filter)
+//     .skip(Number(skip))
+//     .limit(Math.min(Number(limit), 20))
+//     .sort({ createdAt: -1 });
+//   res.status(200).json({ data: products });
+// }
+
 async function getProducts(req, res) {
   const { q, minprice, maxprice, skip = 0, limit = 20 } = req.query;
   const filter = {};
+
+  // ✅ Proper text search (make sure a text index exists on title/description)
   if (q) {
     filter.$text = { $search: q };
   }
-  if (minprice) {
-    filter["price.price"] = {
-      ...filter["price.price"],
-      $gte: Number(minprice),
-    };
-  }
-  if (maxprice) {
-    filter["price.price"] = {
-      ...filter["price.price"],
-      $lte: Number(maxprice),
-    };
+
+  // ✅ Cleaner price filter logic
+  if (minprice || maxprice) {
+    filter["price.price"] = {};
+    if (minprice) filter["price.price"].$gte = Number(minprice);
+    if (maxprice) filter["price.price"].$lte = Number(maxprice);
   }
 
   const products = await Product.find(filter)
     .skip(Number(skip))
     .limit(Math.min(Number(limit), 20))
     .sort({ createdAt: -1 });
+
   res.status(200).json({ data: products });
 }
 
